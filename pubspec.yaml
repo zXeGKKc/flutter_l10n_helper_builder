@@ -1,0 +1,20 @@
+name: l10n_helper_builder
+description: A starting point for Dart libraries or applications.
+version: 1.0.0
+# repository: https://github.com/my_org/my_repo
+
+environment:
+  sdk: ^3.12.0-288.0.dev
+
+# Add regular dependencies here.
+dependencies:
+  analyzer: ^12.0.0
+  build: ^4.0.5
+  collection: ^1.19.1
+  yaml: ^3.1.3
+  path: ^1.9.0
+  dart_style: ^3.1.8
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.25.6

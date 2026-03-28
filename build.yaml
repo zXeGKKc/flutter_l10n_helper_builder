@@ -1,0 +1,8 @@
+builders:
+  l10n_helper_builder:
+    import: "package:l10n_helper_builder/l10n_helper_builder.dart"
+    builder_factories: ["l10nHelperBuilder"]
+    build_extensions:
+      ".dart": [".helper.dart"]
+    auto_apply: root_package
+    build_to: source
