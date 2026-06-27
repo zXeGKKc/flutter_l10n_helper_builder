@@ -7,3 +7,6 @@
 pubspec.lock
 
 .vscode
+
+# FVM Version Cache
+.fvm/

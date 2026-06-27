@@ -64,7 +64,7 @@ class L10nHelperBuilder extends Builder {
       l10nConfig.outputDir,
       l10nConfig.outputLocalizationFile,
     );
-    if (buildStep.inputId.path != targetPath) return;
+    if (!p.equals(buildStep.inputId.path, targetPath)) return;
 
     final content = await buildStep.readAsString(buildStep.inputId);
     final result = _genContent(
