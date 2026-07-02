@@ -17,7 +17,7 @@ class L10nConfig {
   final String outputClass;
   final bool nullableGetter;
   final String? header;
-  final bool format;
+  final bool? format;
 
   const L10nConfig({
     required this.arbDir,
@@ -27,7 +27,7 @@ class L10nConfig {
     required this.outputClass,
     required this.nullableGetter,
     this.header,
-    required this.format,
+    this.format,
   });
 
   factory L10nConfig.fromYamlString(String yamlString) {
@@ -41,7 +41,7 @@ class L10nConfig {
       outputClass: yamlMap['output-class'] ?? 'AppLocalizations',
       nullableGetter: yamlMap['nullable-getter'] ?? false,
       header: yamlMap['header'],
-      format: yamlMap['format'] ?? false,
+      format: yamlMap['format'],
     );
   }
 }
@@ -73,7 +73,6 @@ class L10nHelperBuilder extends Builder {
       className: l10nConfig.outputClass,
       nullable: l10nConfig.nullableGetter,
       header: l10nConfig.header,
-      format: l10nConfig.format,
     );
 
     if (result != null) {
@@ -88,7 +87,6 @@ class L10nHelperBuilder extends Builder {
     required String className,
     bool nullable = true,
     String? header,
-    bool format = false,
   }) {
     final astResult = parseString(content: content);
     final targetClass = astResult.unit.declarations
@@ -109,6 +107,7 @@ class L10nHelperBuilder extends Builder {
     final buffer = StringBuffer();
     buffer.writeAll([
       ?header,
+      "import 'dart:ui';",
       "import '$fileName';",
       'extension ${className}Helper on $className{',
       'String${nullable ? "?" : ""} getTranslation(String key,{List<Object> args=const []}){',
@@ -151,22 +150,44 @@ class L10nHelperBuilder extends Builder {
         buffer.write('return $name($callArgs);');
       }
     }
-    buffer.writeAll([
-      'default:',
-      'return ${nullable ? "null" : "key"};',
-      '}',
-      '}',
-      '}',
-    ]);
+    buffer.write('default:return ${nullable ? "null" : "key"};}}');
 
-    if (format) {
-      final formatter = DartFormatter(
-        languageVersion: DartFormatter.latestLanguageVersion,
-      );
-      return formatter.format(buffer.toString());
-    } else {
-      return buffer.toString();
-    }
+    buffer.write('''static Locale? getLocaleFromLanguageTag(String code) {
+        final tags = code.replaceAll('_', '-').split('-');
+        final parseLanguageCode = tags.elementAtOrNull(0);
+        final parseScriptCode = tags.length > 1 && tags[1].length == 4
+            ? tags[1]
+            : null;
+        final parseCountryCode = tags.length > 1 && tags[1].length != 4
+            ? tags[1]
+            : tags.elementAtOrNull(2);
+        for (final supported in $className.supportedLocales) {
+          if (supported.languageCode != parseLanguageCode) {
+            continue;
+          }
+          final scriptCode = supported.scriptCode;
+          final countryCode = supported.countryCode;
+          if (scriptCode == null && countryCode == null) {
+            return supported;
+          }
+          if (scriptCode != null && scriptCode != parseScriptCode) {
+            continue;
+          }
+          if (countryCode != null && countryCode != parseCountryCode) {
+            continue;
+          }
+          return supported;
+        }
+        return null;
+    }''');
+
+    buffer.write('}');
+
+    final formatter = DartFormatter(
+      languageVersion: DartFormatter.latestLanguageVersion,
+    );
+
+    return formatter.format(buffer.toString());
   }
 
   String _getParamName(FormalParameter p) {
